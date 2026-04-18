@@ -1,0 +1,329 @@
+{
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "RenderIO MP4 to GIF",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RenderIO MP4 to GIF\n\n### How it works\n\n1. Triggers workflow upon form submission to input video URL.\n2. Converts the MP4 video to a GIF using RenderIO.\n3. Waits for an initial period before checking conversion status.\n4. Continuously checks if the conversion has completed.\n5. Provides a download link when conversion is complete.\n\n### Setup steps\n\n- [ ] Set up input form to submit MP4 URL\n- [ ] Configure RenderIO credentials for media conversion\n- [ ] Set conditional logic for completion status checks\n\n### Customization\n\nThe wait durations and conditions can be adjusted based on needs.",
+        "width": 480,
+        "height": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        64
+      ],
+      "id": "283b3ccc-b0ce-4f11-9aba-ed9575b3619e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Start and process video\n\nInitiate workflow and convert video from MP4 to GIF.",
+        "width": 416,
+        "height": 304,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        176
+      ],
+      "id": "0f4f543b-6ccb-4eff-82d3-2f216bba0fab",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Initial wait and status check\n\nWait after processing and check if the conversion is complete.",
+        "width": 416,
+        "height": 304,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        176
+      ],
+      "id": "c78115c2-2202-4620-8975-9c0550272443",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Completion and download\n\nConditional check for completion and provide a download link.",
+        "width": 416,
+        "height": 352,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        64
+      ],
+      "id": "d852fd30-97d9-4fca-8696-124d74c69107",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Retry wait loop\n\nHandles waiting and retrying the status check if not complete.",
+        "width": 240,
+        "height": 320,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        448
+      ],
+      "id": "ab4014c0-58e3-417a-bd88-8245b19c69d0",
+      "name": "Sticky Note4"
+    },
+    {
+      "id": "580a36ce-eaaf-485d-8db3-51331ff69732",
+      "name": "When Video Submitted",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        1808,
+        312
+      ],
+      "webhookId": "b6aec145-a927-4566-8bef-1870bc0dafee",
+      "parameters": {
+        "options": {
+          "buttonLabel": "Convert"
+        },
+        "formTitle": "Convert MP4 to GIF",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Video URL",
+              "placeholder": "https://media.renderio.dev/sample.avi",
+              "defaultValue": "https://media.renderio.dev/sample.avi",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "formDescription": "Enter a video URL to convert it to GIF using RenderIO"
+      },
+      "executeOnce": true,
+      "typeVersion": 2.3,
+      "alwaysOutputData": false
+    },
+    {
+      "id": "93847b2c-437b-4d60-a57a-819dbe36814f",
+      "name": "Render MP4 to GIF",
+      "type": "n8n-nodes-renderio.renderio",
+      "position": [
+        2032,
+        312
+      ],
+      "parameters": {
+        "inputFiles": {
+          "fileValues": [
+            {
+              "key": "in_video",
+              "value": "={{ $json[\"Video URL\"] }}"
+            }
+          ]
+        },
+        "outputFiles": {
+          "fileValues": [
+            {
+              "key": "out_gif",
+              "value": "output.gif"
+            }
+          ]
+        },
+        "ffmpegCommand": "-i {{in_video}} {{out_gif}}"
+      },
+      "credentials": {
+        "renderioApi": {
+          "id": "B8t9mmexnXdcf0Fq",
+          "name": "RenderIO account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "946915b7-73bc-423d-81ad-704374c6131b",
+      "name": "Wait 10 Seconds Initial",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        2256,
+        312
+      ],
+      "webhookId": "d3e4f5a6-b7c8-9012-def0-123456789abc",
+      "parameters": {
+        "amount": 10
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "ad5cd8fa-83f4-4508-8eeb-197a5f2ceb67",
+      "name": "Check Conversion Status",
+      "type": "n8n-nodes-renderio.renderio",
+      "position": [
+        2480,
+        312
+      ],
+      "parameters": {
+        "commandId": "={{ $('Render MP4 to GIF').item.json.command_id }}",
+        "operation": "get"
+      },
+      "credentials": {
+        "renderioApi": {
+          "id": "B8t9mmexnXdcf0Fq",
+          "name": "RenderIO account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "d98f65f1-3b4c-46be-93f1-435b63c4bebd",
+      "name": "If Conversion Complete",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2704,
+        240
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "status-check",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "SUCCESS"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "edb12d20-7d57-4580-a45e-003517605c95",
+      "name": "Display Download Link",
+      "type": "n8n-nodes-base.form",
+      "position": [
+        2928,
+        192
+      ],
+      "webhookId": "1e99e5c9-caab-4810-9fcd-ee7fbaf7e222",
+      "parameters": {
+        "options": {},
+        "operation": "completion",
+        "completionTitle": "Conversion Complete!",
+        "completionMessage": "=Your GIF file is ready!\n\n[Download GIF]({{ $json.output_files.out_gif.storage_url }})"
+      },
+      "typeVersion": 2.3
+    },
+    {
+      "id": "ce4e453f-17a0-43aa-8a93-00317ccdbdaa",
+      "name": "Wait 30 Seconds Retry",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        2928,
+        608
+      ],
+      "webhookId": "f6a7b8c9-d0e1-2345-bcde-678901234567",
+      "parameters": {
+        "amount": 30
+      },
+      "typeVersion": 1.1
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "connections": {
+    "Wait 30 Seconds Retry": {
+      "main": [
+        [
+          {
+            "node": "Check Conversion Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Conversion Status": {
+      "main": [
+        [
+          {
+            "node": "If Conversion Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10 Seconds Initial": {
+      "main": [
+        [
+          {
+            "node": "Check Conversion Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Conversion Complete": {
+      "main": [
+        [
+          {
+            "node": "Display Download Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 30 Seconds Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Video Submitted": {
+      "main": [
+        [
+          {
+            "node": "Render MP4 to GIF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render MP4 to GIF": {
+      "main": [
+        [
+          {
+            "node": "Wait 10 Seconds Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

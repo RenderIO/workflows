@@ -1,0 +1,575 @@
+{
+  "name": "TikTok Visual Hook Splitter",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## TikTok Visual Hook Splitter\n\n### How it works\n\n1. Form collects a TikTok URL.\n2. RenderIO downloads it via yt-dlp and runs an FFmpeg pass that stream-copies the source and writes scene-cut timestamps to `scenes.txt`.\n3. A Code node fetches `scenes.txt` and extracts the first scene cut between 1 s and 6 s.\n4. An HTTP Request POSTs to RenderIO `run-ffmpeg-command` with a dynamic `-t \u003ChookEndSec\u003E` so the source is trimmed at exactly the detected reaction-to-demo cut.\n5. Form completion returns the hook MP4 link.\n\n### Why a mix of RenderIO node + HTTP Request\n\nThe Split Visual Hook step needs the trim time substituted at runtime. The renderio community node currently marks `ffmpegCommand` as `noDataExpression: true` so `{{ $json.hookEndSec }}` is not evaluated. The `httpRequest.jsonBody` field DOES evaluate it, so the split step uses HTTP Request with the same `renderioApi` credential.\n\nRenderIO placeholders use the new `\u003C\u003Calias\u003E\u003E` syntax so they no longer collide with n8n's `{{ }}` expression syntax.\n\n### Setup steps\n\n- [ ] Add a RenderIO API credential (used by all four RenderIO calls).\n- [ ] Submit a TikTok URL.\n\n### Customization\n\nTweak the scene threshold (`0.3`) in **Download And Detect Scenes** for tighter or looser cut detection, or change `[minS, maxS]` in **Parse First Scene Cut** for different hook-length policies.",
+        "height": 720,
+        "width": 480
+      },
+      "id": "37199307-c5a6-4a81-aa92-d13d38ccb14c",
+      "name": "Sticky Note 525df699",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-432, -672]
+    },
+    {
+      "parameters": {
+        "content": "## Input & download\n\nForm submission triggers RenderIO download + scene detection in one FFmpeg pass.",
+        "height": 320,
+        "width": 512,
+        "color": 7
+      },
+      "id": "9e9a3467-0354-45b9-9bf4-6da6362ce041",
+      "name": "Sticky Note eb0fabe5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [48, 160]
+    },
+    {
+      "parameters": {
+        "content": "## Detection polling\n\nWait → `command.get` → If terminal status. Loops back via the retry sticky below on QUEUED / PROCESSING / RUNNING.",
+        "height": 320,
+        "width": 640,
+        "color": 7
+      },
+      "id": "48b2c829-170b-46f6-af21-d9e7a24d3f0c",
+      "name": "Sticky Note 6ae76f29",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [592, 160]
+    },
+    {
+      "parameters": {
+        "content": "## Detection retry\n\nWait 10 s then re-check.",
+        "height": 284,
+        "width": 256,
+        "color": 7
+      },
+      "id": "c2a8c039-24ed-4d1b-8874-ade0c799c78c",
+      "name": "Sticky Note c92d1141",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1008, 512]
+    },
+    {
+      "parameters": {
+        "content": "## Parse + dynamic trim\n\nCode node parses `scenes.txt` for the first `pts_time`; HTTP Request POSTs the trim with `-t {{ $json.hookEndSec }}` evaluated at runtime.",
+        "height": 304,
+        "width": 416,
+        "color": 7
+      },
+      "id": "40ad1ce3-685b-48f8-853a-ad9e9bd88ba9",
+      "name": "Sticky Note 0ee79fa7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1248, 80]
+    },
+    {
+      "parameters": {
+        "content": "## Split polling\n\nWait → `command.get` → If terminal status, mirrors the detection loop.",
+        "height": 304,
+        "width": 640,
+        "color": 7
+      },
+      "id": "8e46359c-d8ff-4562-9b2d-5502a391aa6e",
+      "name": "Sticky Note ab3ae771",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1680, 80]
+    },
+    {
+      "parameters": {
+        "content": "## Split retry\n\nWait 10 s then re-check.",
+        "height": 284,
+        "width": 272,
+        "color": 7
+      },
+      "id": "ad981519-3d95-4981-b7ca-508711393aa9",
+      "name": "Sticky Note 5025a6f6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2112, 400]
+    },
+    {
+      "parameters": {
+        "content": "## Deliver\n\nForm completion returns the hook MP4 link.",
+        "height": 304,
+        "width": 280,
+        "color": 7
+      },
+      "id": "0ee3b056-2c83-41c3-a3f7-067d1aa8a3b8",
+      "name": "Sticky Note 51d4164d",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2352, 0]
+    },
+    {
+      "parameters": {
+        "formTitle": "TikTok Visual Hook Splitter",
+        "formDescription": "Paste a TikTok URL where the first 1-6 seconds are a reaction shot (smile, cry, gasp) and the rest is an app/product demo. The workflow auto-detects the reaction-to-demo cut with FFmpeg, then trims the source at that exact time. Ready to feed into Kling motion control with your AI avatar to mass-produce on-brand UGC reactions.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "TikTok URL",
+              "placeholder": "https://www.tiktok.com/@user/video/...",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "buttonLabel": "Extract Visual Hook"
+        }
+      },
+      "id": "dca3e6e0-1922-44f7-afbb-9dfb4ff09d6d",
+      "name": "When TikTok URL Submitted",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [96, 304],
+      "executeOnce": true,
+      "webhookId": "ff6f643d-48ae-4bfa-9dfe-14abe546ca82"
+    },
+    {
+      "parameters": {
+        "operation": "downloadAndProcessMedia",
+        "ffmpegCommand": "-i \u003C\u003Cin_video\u003E\u003E -c copy -map 0 \u003C\u003Cout_video\u003E\u003E -vf \"select='gt(scene,0.3)',metadata=print:file=\u003C\u003Cout_scenes\u003E\u003E\" -an -f null -",
+        "mediaUrls": {
+          "urlValues": [
+            {
+              "key": "in_video",
+              "value": "={{ $json[\"TikTok URL\"] }}"
+            }
+          ]
+        },
+        "outputFiles": {
+          "fileValues": [
+            {
+              "value": "source.mp4"
+            },
+            {
+              "key": "out_scenes",
+              "value": "scenes.txt"
+            }
+          ]
+        }
+      },
+      "id": "b5765337-3e59-4691-b46b-cb863e9577f6",
+      "name": "Download And Detect Scenes",
+      "type": "n8n-nodes-renderio.renderio",
+      "typeVersion": 1,
+      "position": [384, 288],
+      "credentials": {
+        "renderioApi": {
+          "id": "0lCddd3KcVKtL447",
+          "name": "RenderIO account"
+        }
+      }
+    },
+    {
+      "parameters": {
+
+      },
+      "id": "d0ded013-7cfb-406e-98fe-795914ef10e8",
+      "name": "Wait 5s for Detection",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [640, 304],
+      "webhookId": "d20e276e-cbcb-41b5-93ea-909edb99c040"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "commandId": "={{ $('Download And Detect Scenes').item.json.command_id }}"
+      },
+      "id": "55fcfb03-3972-43f8-bb36-58e839aea22f",
+      "name": "Check Detection Status",
+      "type": "n8n-nodes-renderio.renderio",
+      "typeVersion": 1,
+      "position": [864, 304],
+      "credentials": {
+        "renderioApi": {
+          "id": "0lCddd3KcVKtL447",
+          "name": "RenderIO account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "PROCESSING",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "d2",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "QUEUED",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "d3",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+
+        }
+      },
+      "id": "c1ef7063-6235-4b13-aa4f-6bbcf8908943",
+      "name": "If Detection Done",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1072, 304]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const scenesUrl = $input.item.json.output_files.out_scenes.storage_url;\nconst sourceVideoUrl = $input.item.json.output_files.out_video.storage_url;\nconst raw = await this.helpers.httpRequest({ method: 'GET', url: scenesUrl, returnFullResponse: false });\nconst text = typeof raw === 'string' ? raw : JSON.stringify(raw);\nconst minS = 1;\nconst maxS = 6;\nconst times = [];\nconst re = /pts_time:([0-9]+\\.?[0-9]*)/g;\nlet m;\nwhile ((m = re.exec(text)) !== null) times.push(parseFloat(m[1]));\nlet hookEnd, reason;\nif (times.length === 0) { hookEnd = maxS; reason = 'no_scene_cut_fallback_to_max'; }\nelse {\n  const first = times[0];\n  if (first \u003C minS) {\n    const next = times.find(t =\u003E t \u003E= minS);\n    hookEnd = next != null ? Math.min(next, maxS) : maxS;\n    reason = next != null ? 'first_cut_too_early_used_next' : 'first_cut_too_early_used_max';\n  } else {\n    hookEnd = Math.min(first, maxS);\n    reason = first \u003C= maxS ? 'first_scene_cut' : 'first_cut_above_max_capped';\n  }\n}\nconst hookEndSec = Math.round(hookEnd * 1000) / 1000;\nreturn { json: { hookEndSec, allSceneCuts: times, reason, sourceVideoUrl } };"
+      },
+      "id": "f7e1fee5-9c16-42ef-b6f5-84acbf2f3865",
+      "name": "Parse First Scene Cut",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1296, 224]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://renderio.dev/api/v1/run-ffmpeg-command",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "renderioApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ input_files: { in_video: $json.sourceVideoUrl }, output_files: { out_hook: 'visual_hook.mp4' }, ffmpeg_command: '-i \u003C\u003Cin_video\u003E\u003E -t ' + $json.hookEndSec + ' -c:v libx264 -preset veryfast -crf 20 -c:a aac -b:a 128k -movflags +faststart \u003C\u003Cout_hook\u003E\u003E' }) }}",
+        "options": {
+
+        }
+      },
+      "id": "229064ab-ce46-4048-9041-4d89fccc9559",
+      "name": "Split Visual Hook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1504, 224],
+      "credentials": {
+        "renderioApi": {
+          "id": "0lCddd3KcVKtL447",
+          "name": "RenderIO account"
+        }
+      }
+    },
+    {
+      "parameters": {
+
+      },
+      "id": "870ce5b9-edf9-4e3f-bd18-f39bb85bbbb8",
+      "name": "Wait 5s for Split",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1728, 224],
+      "webhookId": "207f9afd-c105-48ee-9d9c-08f42d552d7a"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "commandId": "={{ $('Split Visual Hook').item.json.command_id }}"
+      },
+      "id": "ad3e426d-4021-4634-89c6-c0510ca547af",
+      "name": "Check Split Status",
+      "type": "n8n-nodes-renderio.renderio",
+      "typeVersion": 1,
+      "position": [1952, 224],
+      "credentials": {
+        "renderioApi": {
+          "id": "0lCddd3KcVKtL447",
+          "name": "RenderIO account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "PROCESSING",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "s2",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "QUEUED",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "s3",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+
+        }
+      },
+      "id": "d8df58be-a759-4d45-b14c-dceb2e6145c4",
+      "name": "If Split Done",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2176, 224]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Visual hook extracted",
+        "completionMessage": "=Status: **{{ $json.status }}**\n\nHook end time: **{{ $('Parse First Scene Cut').item.json.hookEndSec }}s** (detection: {{ $('Parse First Scene Cut').item.json.reason }})\n\nAll scene cuts detected: {{ JSON.stringify($('Parse First Scene Cut').item.json.allSceneCuts) }}\n\n[Download visual hook MP4]({{ $json.output_files.out_hook.storage_url }})\n\nFeed this clip into RenderIO + Kling motion control with your AI avatar to mass-produce on-brand UGC reactions.",
+        "options": {
+
+        }
+      },
+      "id": "3c5e1c7d-c071-4170-bf4d-972e30d6f439",
+      "name": "Display Hook Download",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [2448, 144],
+      "webhookId": "aeb94fd2-2341-4486-8bc1-51adddaae741"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "c672827f-a002-4960-b992-f9a6bd3f2963",
+      "name": "Wait 10s Retry Split",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2208, 512],
+      "webhookId": "c9a3bd9f-fd5f-4516-8b5c-d789f368be36"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "7166de8e-d3b6-41e9-bbd6-74b3470880b9",
+      "name": "Wait 10s Retry Detect",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1088, 640],
+      "webhookId": "1a277d22-a07d-4e3a-b73f-fb138ed680bf"
+    }
+  ],
+  "pinData": {
+    "When TikTok URL Submitted": [
+      {
+        "json": {
+          "TikTok URL": "https://www.tiktok.com/@dreamlyfe.marina/video/7451682318361840942",
+          "submittedAt": "2026-05-20T09:20:36.396+02:00",
+          "formMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When TikTok URL Submitted": {
+      "main": [
+        [
+          {
+            "node": "Download And Detect Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download And Detect Scenes": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s for Detection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s for Detection": {
+      "main": [
+        [
+          {
+            "node": "Check Detection Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Detection Status": {
+      "main": [
+        [
+          {
+            "node": "If Detection Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Detection Done": {
+      "main": [
+        [
+          {
+            "node": "Parse First Scene Cut",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 10s Retry Detect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse First Scene Cut": {
+      "main": [
+        [
+          {
+            "node": "Split Visual Hook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Visual Hook": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s for Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s for Split": {
+      "main": [
+        [
+          {
+            "node": "Check Split Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Split Status": {
+      "main": [
+        [
+          {
+            "node": "If Split Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Split Done": {
+      "main": [
+        [
+          {
+            "node": "Display Hook Download",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 10s Retry Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10s Retry Split": {
+      "main": [
+        [
+          {
+            "node": "Check Split Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10s Retry Detect": {
+      "main": [
+        [
+          {
+            "node": "Check Detection Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "d8884f0c-fcd0-49e6-8106-c24541033fe6",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "instanceId": "2f29c59ecec680537ecdee216b8871b3a20f9ecfaf78964ddd361332472154b4"
+  },
+  "id": "RVIrQymPm5XFQCtG",
+  "tags": []
+}
